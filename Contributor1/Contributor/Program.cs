@@ -40,7 +40,6 @@ var y0 = (size - h) / 2 + OuterMargin;
 using var image = new Bitmap(size, size);
 using var g = Graphics.FromImage(image);
 using var bgBrush = new SolidBrush(bgColor);
-using var cellBrush = new SolidBrush(cellColor);
 
 g.FillRectangle(bgBrush, 0, 0, size, size);
 g.TranslateTransform(x0, y0);
@@ -50,15 +49,20 @@ for (int x = 0; x < sw; x++)
 	for (int y = 0; y < sh; y++)
 	{
 		var c = source.GetPixel(x, y);
+		c = Convert(c);
 		using var brush = new SolidBrush(c);
-		DrawSquare(c.R > CellMaxGray && c.B > CellMaxGray && c.G > CellMaxGray ? cellBrush : brush,
-			GetSize(x), GetSize(y), CellSize, CellRadius);
+		DrawSquare(brush, GetSize(x), GetSize(y), CellSize, CellRadius);
 	}
 }
 
 image.Save(targetPath, ImageFormat.Png);
 
 int GetSize(int cellsCount) => CellSize * cellsCount + CellMargin * (cellsCount + 1);
+
+Color Convert(Color c)
+{
+	return c.R > CellMaxGray && c.B > CellMaxGray && c.G > CellMaxGray ? cellColor : c;
+}
 
 void DrawSquare(Brush brush, int x, int y, int size, int radius)
 {
