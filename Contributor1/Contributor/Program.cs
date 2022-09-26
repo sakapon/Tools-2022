@@ -10,6 +10,7 @@ const int OuterMargin = CellMargin * 2;
 var BgColor = Color.FromArgb(248, 248, 248);
 var CellColor = Color.FromArgb(228, 228, 228);
 const float CellMaxBrightness = 0.9F;
+const double DarkScale = (double)(CellSize + CellMargin) / CellSize;
 
 #if DEBUG
 var targetPath = "Output.png";
@@ -62,8 +63,14 @@ int GetSize(int cellsCount) => CellSize * cellsCount + CellMargin * (cellsCount 
 Color Convert(Color c)
 {
 	if (c.A == 0) return CellColor;
-	if (c.GetBrightness() > CellMaxBrightness) return CellColor;
-	return Color.FromArgb(255, c);
+	c = Color.FromArgb(Darken(c.R), Darken(c.G), Darken(c.B));
+	return c.GetBrightness() <= CellMaxBrightness ? c : CellColor;
+}
+
+int Darken(int x)
+{
+	x = 255 - (int)(DarkScale * (255 - x));
+	return x >= 0 ? x : 0;
 }
 
 void DrawSquare(Brush brush, int x, int y, int size, int radius)
