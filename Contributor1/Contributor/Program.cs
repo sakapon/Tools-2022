@@ -5,11 +5,12 @@ using System.Drawing.Imaging;
 const int CellSize = 14;
 const int CellRadius = 4;
 const int CellMargin = 4;
-int OuterMargin = CellMargin * 2;
+const int OuterMargin = CellMargin * 2;
 
-const int CellMaxGray = 232;
-var bgColor = Color.FromArgb(248, 248, 248);
-var cellColor = Color.FromArgb(228, 228, 228);
+var BgColor = Color.FromArgb(248, 248, 248);
+var CellColor = Color.FromArgb(228, 228, 228);
+const float CellMaxBrightness = 0.9F;
+const double DarkScale = (double)(CellSize + CellMargin) / CellSize;
 
 #if DEBUG
 var targetPath = "Output.png";
@@ -39,8 +40,7 @@ var y0 = (size - h) / 2 + OuterMargin;
 
 using var image = new Bitmap(size, size);
 using var g = Graphics.FromImage(image);
-using var bgBrush = new SolidBrush(bgColor);
-using var cellBrush = new SolidBrush(cellColor);
+using var bgBrush = new SolidBrush(BgColor);
 
 g.FillRectangle(bgBrush, 0, 0, size, size);
 g.TranslateTransform(x0, y0);
@@ -50,15 +50,28 @@ for (int x = 0; x < sw; x++)
 	for (int y = 0; y < sh; y++)
 	{
 		var c = source.GetPixel(x, y);
+		c = Convert(c);
 		using var brush = new SolidBrush(c);
-		DrawSquare(c.R > CellMaxGray && c.B > CellMaxGray && c.G > CellMaxGray ? cellBrush : brush,
-			GetSize(x), GetSize(y), CellSize, CellRadius);
+		DrawSquare(brush, GetSize(x), GetSize(y), CellSize, CellRadius);
 	}
 }
 
 image.Save(targetPath, ImageFormat.Png);
 
 int GetSize(int cellsCount) => CellSize * cellsCount + CellMargin * (cellsCount + 1);
+
+Color Convert(Color c)
+{
+	if (c.A == 0) return CellColor;
+	c = Color.FromArgb(Darken(c.R), Darken(c.G), Darken(c.B));
+	return c.GetBrightness() <= CellMaxBrightness ? c : CellColor;
+}
+
+int Darken(int x)
+{
+	x = 255 - (int)(DarkScale * (255 - x));
+	return x >= 0 ? x : 0;
+}
 
 void DrawSquare(Brush brush, int x, int y, int size, int radius)
 {
